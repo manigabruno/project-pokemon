@@ -1,12 +1,29 @@
 const express = require('express');
 const {success, getUniqueId}  = require('./Helper.js');
 let pokemons = require('./mock-pokemon.js');
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
+const { Sequelize } = require ('sequelize');
 const morgan = require ('morgan');
 
 const app = express();
 const port = 3000;
 
+const sequelize = new Sequelize(
+'pokedex',
+'root',
+'',
+{
+    host: 'localhost',
+    dialect: 'mariadb',
+    dialectOptions: {
+        timezone: 'Etc/GMT-2'
+    }, 
+    logging: false
+  }
+)
+sequelize.authenticate()
+.then(_ => console.log('la connexion a la base de donnée a bien été etablie'))
+.catch(error => console.error(`Impossible de se connecter a la base donnée ${error}`))
 app
   .use(morgan('dev'))
   .use(bodyParser.json())
@@ -32,7 +49,7 @@ app.post('/api/pokemons', (req, res) => {
      const id = getUniqueId(pokemons);
      const pokemonCreated = { ...req.body, ...{id: id, created: new Date()}}
      pokemons.push(pokemonCreated);
-     const message = `le pokemon ${pokemonCreated.name} à bien été crée.`
+     const message = `le pokemon ${pokemonCreated.name} à bien été créé.`
      res.json(success(message, pokemonCreated))
     });
 
@@ -45,6 +62,14 @@ app.put('/api/pokemons/:id', (req, res) => {
     })
     const message = `le pokemon ${pokemonUpdated.name} à bien été modifié`
     res.json(success(message, pokemonUpdated))
+    })
+    // suppression d'un pokemon
+ app.delete('/api/pokemons/:id', (req, res) =>{
+    const id = parseInt(req.params.id)
+    const pokemonDeleted = pokemons.find(pokemon => pokemon.id === id)
+    pokemons.filter(pokemon => pokemon.id !== id)
+    const message = `le pokemon ${pokemonDeleted.name} à bien été supprimé`
+    res.json(success(message, pokemonDeleted))
     })
 
     
