@@ -1,12 +1,13 @@
 const express = require('express');
-const {success, getUniqueId}  = require('./Helper.js');
 let pokemons = require('./mock-pokemon.js');
 const bodyParser = require('body-parser');
-const { Sequelize } = require ('sequelize');
+const { Sequelize, DataTypes } = require ('sequelize');
+const {success, getUniqueId}  = require('./Helper.js');
 const morgan = require ('morgan');
+const pokemonModel = require('./src/models/pokemon')
 
 const app = express();
-const port = 3000;
+const port = 4000;
 
 const sequelize = new Sequelize(
 'pokedex',
@@ -24,6 +25,23 @@ const sequelize = new Sequelize(
 sequelize.authenticate()
 .then(_ => console.log('la connexion a la base de donnée a bien été etablie'))
 .catch(error => console.error(`Impossible de se connecter a la base donnée ${error}`))
+
+const Pokemon = pokemonModel(sequelize, DataTypes)
+sequelize.sync({force: true})
+.then(_ => {
+  console.log('la base de donnée "pokedex a bien été synchronisée')
+
+   pokemons.map(pokemon => { 
+     Pokemon.create({
+     name: pokemon.name,
+     hp: pokemon.hp,
+     cp: pokemon.cp,
+     picture: pokemon.picture,
+     types: pokemon.types.join()
+     }).then(bulbizzare => console.log(bulbizzare.toJSON()))
+   })
+})
+
 app
   .use(morgan('dev'))
   .use(bodyParser.json())
